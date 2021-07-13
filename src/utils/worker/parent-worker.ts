@@ -4,16 +4,13 @@ import { WorkerPool } from "../worker-pool";
 import Worker from "./child-worker?worker";
 import type { FzfResultItem } from "../../lib/main";
 
-import list from "../../list.json";
+// import list from "../../list.json";
+const list = new Array(90000).fill("aaaaaaaaaaaaaaaaaaaaaaaaa");
 
 // Idea of these constansts is taken from
 // https://github.com/junegunn/fzf/blob/7191ebb615f5d6ebbf51d598d8ec853a65e2274d/src/matcher.go#L42
 const MAX_PARTITIONS = 32;
-const PARTITIONS = Math.max(
-  // hardwareConcurrency is basically what runtime.NumCPU() is in Golang
-  Math.min(navigator.hardwareConcurrency ?? 4, MAX_PARTITIONS) - 1,
-  1
-);
+const PARTITIONS = 32;
 
 const sliceList = () => {
   const slices = new Array(PARTITIONS);
@@ -21,11 +18,11 @@ const sliceList = () => {
 
   for (let i = 0; i < PARTITIONS; i++) {
     const startIdx = i * slicelen;
+    let endIdx = startIdx + slicelen;
     if (i === PARTITIONS - 1) {
-      slices[i] = list.slice(startIdx);
-    } else {
-      slices[i] = list.slice(startIdx, startIdx + slicelen);
+      endIdx = list.length;
     }
+    slices[i] = [startIdx, endIdx];
   }
 
   return slices;
@@ -114,7 +111,9 @@ const fzfFindAsync = async (query: string) => {
 
     result = result.slice(0, 32);
 
-    cache[query] = result;
+    console.log(pool.pool);
+
+    // cache[query] = result;
     return result;
   } catch (error) {
     // TODO null ain't the best return, maybe throw reject w/ error?
